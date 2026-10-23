@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mug Shop</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;color:#222}
+header{background:#3b2f2f;color:#fff;padding:12px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0 20px 0 0}
+header a{color:#fbe7c6;text-decoration:none}
+header a.active{text-decoration:underline}
+main{padding:20px;max-width:1000px}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.product{border-bottom:1px solid #eee;padding:6px 0;display:flex;gap:12px;align-items:center}
+.product .name{width:220px}
+.msg{padding:8px;margin:8px 0}
+.err{background:#fde2e2;color:#a30000}
+.ok{background:#e2f7e2;color:#145214}
+table{border-collapse:collapse}td,th{border-bottom:1px solid #ddd;padding:6px 10px;text-align:left}
+#reviews{background:#faf6f0;padding:10px;margin-top:10px}
+@media (max-width: 800px){ #checkout{display:none} }
+</style></head>
+<body>
+<header><h1>☕ Mug Shop</h1>
+<a href="#products">Products</a><a href="#cart">Cart (<span id="cartCount">0</span>)</a><a href="#orders">Orders</a><a href="#profile">Profile</a><a href="#login">Login</a>
+</header>
+<main id="app"></main>
+<script>
+const $ = s => document.querySelector(s);
+const state = { cart: [], user: null };
+const money = n => '$' + n.toFixed(2);
+
+function setActive(){ document.querySelectorAll('header a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === location.hash)); }
+
+async function products(){
+  $('#app').innerHTML = `<h2>Products</h2>
+    <div class="row"><input id="q" aria-label="Search products" placeholder="Search mugs"><button id="go">Search</button></div>
+    <div id="status">Loading…</div><div id="list"></div><div id="reviews" hidden></div>`;
+  $('#go').onclick = () => load($('#q').value);
+  $('#q').onkeydown = e => { if (e.key === 'Enter') load($('#q').value); };
+  load('');
+}
+async function load(q){
+  $('#status').textContent = 'Loading…'; $('#list').innerHTML = '';
+  let items = [];
+  try {
+    const r = await fetch('/api/products?q=' + encodeURIComponent(q));
+    items = (await r.json()).items;
+  } catch (e) { console.error('product load failed', e); }
+  items = items || [];
+  $('#status').textContent = `${items.length} results`;
+  $('#list').innerHTML = items.map(p => `<div class="product"><span class="name">${p.name}</span><span>${money(p.price)}</span>
+    <button data-add="${p.id}">Add to cart</button><button data-rev="${p.id}">Reviews</button></div>`).join('');
+  $('#list').querySelectorAll('[data-add]').forEach(b => b.onclick = () => add(items.find(p => p.id == b.dataset.add)));
+  $('#list').querySelectorAll('[data-rev]').forEach(b => b.onclick = () => reviews(items.find(p => p.id == b.dataset.rev)));
+}
+async function reviews(p){
+  const r = await (await fetch(`/api/products/${p.id}/reviews`)).json();
+  const box = $('#reviews'); box.hidden = false;
+  box.innerHTML = `<h3>Reviews for ${p.name}</h3>` + (r.reviews.length ? r.reviews.map(x => `<p><b>${x.user}</b> ${'★'.repeat(x.stars)}<br>${x.text}</p>`).join('') : '<p>No reviews yet.</p>');
+  box.scrollIntoView();
+}
+function add(p){
+  const line = state.cart.find(l => l.id === p.id);
+  if (line) line.qty++; else state.cart.push({ ...p, qty: 1 });
+  $('#cartCount').textContent = state.cart.reduce((s, l) => s + l.qty, 0);
+}
+
+function lineTotal(l){ return l.price * (l.qty >= 10 ? l.qty - 1 : l.qty); }
+function cart(){
+  const sub = state.cart.reduce((s, l) => s + lineTotal(l), 0);
+  const total = state.coupon ? sub * 0.9 : sub;
+  $('#app').innerHTML = `<h2>Cart</h2>` + (state.cart.length ? `<table><tr><th>Item</th><th>Price</th><th>Qty</th><th>Line total</th><th></th></tr>
+    ${state.cart.map((l, i) => `<tr><td>${l.name}</td><td>${money(l.price)}</td>
+      <td><input type="number" min="1" value="${l.qty}" data-qty="${i}" aria-label="Quantity for ${l.name}" style="width:60px"></td>
+      <td>${money(lineTotal(l))}</td><td><button data-rm="${i}">Remove</button></td></tr>`).join('')}</table>
+    <p>Subtotal: <b id="subtotal">${money(sub)}</b>${state.coupon ? ` · Coupon SAVE10 (−10%)` : ''}</p>
+    <p>Total: <b id="total">${money(total)}</b></p>
+    <div class="row"><button id="coupon">Apply coupon</button><button id="checkout">Checkout</button></div><div id="cartMsg"></div>`
+    : '<p>Your cart is empty.</p>');
+  document.querySelectorAll('[data-qty]').forEach(inp => inp.onchange = () => { state.cart[inp.dataset.qty].qty = Math.max(1, parseInt(inp.value) || 1); cart(); });
+  document.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    const l = state.cart[b.dataset.rm];
+    confirm(`Remove ${l.name} from your cart?`);
+    state.cart.splice(b.dataset.rm, 1); add0(); cart();
+  });
+  const c = $('#coupon'); if (c) c.onclick = () => {
+    const code = prompt('Enter coupon code');
+    if (code === null) return;
+    if (code.trim().toUpperCase() === 'SAVE10') { state.coupon = true; cart(); }
+    else $('#cartMsg').innerHTML = '<div class="msg err">Invalid coupon code</div>';
+  };
+  const co = $('#checkout'); if (co) co.onclick = () => $('#cartMsg').innerHTML = '<div class="msg ok">Order placed (demo)</div>';
+}
+function add0(){ $('#cartCount').textContent = state.cart.reduce((s, l) => s + l.qty, 0); }
+
+async function orders(){
+  const r = await (await fetch('/api/orders')).json();
+  $('#app').innerHTML = `<h2>Orders</h2><table><tr><th>Order</th><th>Total</th></tr>${r.orders.map(o => `<tr><td>${o.id}</td><td>${money(o.total)}</td></tr>`).join('')}</table>
+    <p><button id="delAll" style="background:#a30000;color:#fff">Delete all orders</button></p><div id="ordMsg"></div>`;
+  $('#delAll').onclick = async () => {
+    if (!confirm('Delete ALL orders? This cannot be undone.')) return;
+    await fetch('/api/orders', { method: 'DELETE' });
+    orders();
+  };
+}
+
+function profile(){
+  $('#app').innerHTML = `<h2>Profile</h2>
+    <p>Phone must contain digits only. Avatar must be an image (PNG or JPG).</p>
+    <div class="row"><label>Name <input id="pname" value="QA Tester"></label></div>
+    <div class="row"><label>Phone <input id="phone"></label></div>
+    <div class="row"><label>Avatar <input type="file" id="avatar"></label></div>
+    <button id="save">Save profile</button><div id="pmsg"></div>`;
+  $('#save').onclick = async () => {
+    const f = $('#avatar').files[0];
+    await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: $('#pname').value, phone: $('#phone').value, avatar: f ? f.name : null }) });
+    $('#pmsg').innerHTML = `<div class="msg ok">Profile saved${f ? ` · Avatar updated: ${f.name}` : ''}</div>`;
+  };
+}
+
+function login(){
+  $('#app').innerHTML = `<h2>Login</h2>
+    <div class="row"><label>Email <input id="email" type="email"></label></div>
+    <div class="row"><label>Password <input id="pw" type="password"></label></div>
+    <button id="signin">Sign in</button><div id="lmsg"></div>`;
+  $('#signin').onclick = async () => {
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $('#email').value, password: $('#pw').value }) });
+    const data = await r.json();
+    $('#lmsg').innerHTML = `<div class="msg ok">Welcome, ${data.user.name}</div>`;
+  };
+}
+
+const routes = { '#products': products, '#cart': cart, '#orders': orders, '#profile': profile, '#login': login };
+function route(){ if (!routes[location.hash]) location.hash = '#products'; else { setActive(); routes[location.hash](); } }
+window.onhashchange = route; route();
+</script>
+</body></html>

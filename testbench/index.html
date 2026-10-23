@@ -1,0 +1,90 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>MCP Tool Test Bench</title>
+<style>
+body{font-family:sans-serif;margin:0;padding:12px;width:1100px}
+.box{border:2px solid #333;padding:8px;margin:6px;display:inline-block;vertical-align:top}
+#log{position:fixed;right:0;top:0;width:330px;height:100vh;overflow:auto;background:#111;color:#0f0;font:12px monospace;padding:6px;white-space:pre-wrap}
+#hoverT{width:150px;height:50px;background:#9cf}
+#tip{display:none;background:#fc0;padding:4px}
+#hoverT:hover + #tip{display:block}
+#drag{width:80px;height:40px;background:#f99;cursor:move}
+#dropT{width:150px;height:60px;background:#ddd}
+#dropzone{width:200px;height:70px;background:#cfc}
+#tall{height:2500px;background:linear-gradient(#fff,#ccf)}
+#wide{width:600px;overflow-x:scroll;white-space:nowrap}
+#wide div{display:inline-block;width:300px;height:40px;background:#fcf;margin:2px}
+#bottom{background:#f60;color:#fff;padding:20px}
+</style></head>
+<body>
+<div id="log">EVENT LOG&#10;</div>
+<h1>MCP Tool Test Bench</h1>
+<article><h2>Article</h2><p>This is the main article body used for get_page_text verification. Keyword: PINEAPPLE-42.</p></article>
+
+<div class="box"><h3>Clicks</h3>
+<button id="btnL">Left Button</button>
+<button id="btnR">Right Target</button>
+<button id="btnD">Double Target</button>
+<p id="para">Triple click selects this whole paragraph text.</p>
+<button id="btnMod">Modifier Button</button>
+</div>
+
+<div class="box"><h3>Form</h3>
+<input id="txt" placeholder="text input" aria-label="Name field"><br>
+<textarea id="ta" aria-label="Notes"></textarea><br>
+<label><input type="checkbox" id="cb"> Agree checkbox</label><br>
+<select id="sel" aria-label="Color select"><option value="r">Red</option><option value="g">Green</option><option value="b">Blue</option></select><br>
+<input type="number" id="num" aria-label="Quantity">
+<input type="file" id="file" aria-label="File picker" multiple>
+<input type="file" id="hiddenFile" style="display:none" aria-label="Hidden file">
+</div>
+
+<div class="box"><h3>Hover</h3><div id="hoverT">Hover me</div><div id="tip">TOOLTIP VISIBLE</div></div>
+
+<div class="box"><h3>Drag</h3><div id="drag">drag me</div><div id="dropT">drop target</div></div>
+
+<div class="box"><h3>Drop zone (files)</h3><div id="dropzone">drop files here</div></div>
+
+<div class="box"><h3>Console/Network</h3>
+<button id="btnLog">Emit console</button>
+<button id="btnFetch">Fetch data</button>
+<a id="popup" href="/data.json?popup=1" target="_blank">Open popup</a>
+<button id="btnConfirm">Confirm dialog</button>
+</div>
+
+<div class="box"><h3>Horizontal</h3><div id="wide"><div>A</div><div>B</div><div>C</div><div>D</div></div></div>
+
+<div id="tall">tall spacer</div>
+<div id="bottom">BOTTOM SECTION - scroll_to target</div>
+
+<script>
+const L=m=>{const e=document.getElementById('log');e.textContent+=new Date().toISOString().slice(11,19)+' '+m+'\n';e.scrollTop=1e9;console.log('[BENCH] '+m)};
+const mods=e=>['ctrl','shift','alt','meta'].filter(k=>e[k+'Key']).join('+')||'none';
+btnL.onclick=e=>L('left_click btnL mods='+mods(e));
+btnR.oncontextmenu=e=>{e.preventDefault();L('right_click btnR')};
+btnD.ondblclick=()=>L('double_click btnD');
+para.addEventListener('click',e=>{if(e.detail===3)L('triple_click para sel="'+getSelection().toString().trim()+'"')});
+btnMod.onclick=e=>L('click btnMod mods='+mods(e));
+txt.oninput=()=>L('input txt="'+txt.value+'"');
+ta.onchange=()=>L('change ta="'+ta.value+'"');
+cb.onchange=()=>L('change cb='+cb.checked);
+sel.onchange=()=>L('change sel='+sel.value);
+num.onchange=()=>L('change num='+num.value);
+file.onchange=()=>L('file input: '+[...file.files].map(f=>f.name+'('+f.size+')').join(','));
+hiddenFile.onchange=()=>L('hidden file input: '+[...hiddenFile.files].map(f=>f.name+'('+f.size+')').join(','));
+hoverT.onmouseenter=()=>L('hover enter hoverT');
+document.addEventListener('keydown',e=>{if(e.target===document.body)L('keydown '+e.key+' mods='+mods(e))});
+let dragging=false;
+drag.onmousedown=()=>{dragging=true;L('mousedown drag')};
+document.addEventListener('mouseup',e=>{if(!dragging)return;dragging=false;const r=dropT.getBoundingClientRect();const hit=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;L('mouseup at '+e.clientX+','+e.clientY+' onDropTarget='+hit)});
+dropzone.ondragover=e=>e.preventDefault();
+dropzone.ondrop=e=>{e.preventDefault();L('dropzone: '+[...e.dataTransfer.files].map(f=>f.name+'('+f.type+','+f.size+')').join(','))};
+btnLog.onclick=()=>{console.log('[APP] info message');console.warn('[APP] warn message');console.error('[APP] error message');L('emitted console')};
+btnFetch.onclick=async()=>{const r=await fetch('/data.json?from=btn');L('fetch status '+r.status);fetch('/missing-endpoint').catch(()=>{})};
+window.addEventListener('scroll',()=>{clearTimeout(window._s);window._s=setTimeout(()=>L('scrollY='+Math.round(scrollY)),200)});
+wide.addEventListener('scroll',()=>{clearTimeout(window._w);window._w=setTimeout(()=>L('wide.scrollLeft='+wide.scrollLeft),200)});
+window.addEventListener('resize',()=>{clearTimeout(window._r);window._r=setTimeout(()=>L('resize '+innerWidth+'x'+innerHeight),200)});
+btnConfirm.onclick=()=>{const ok=confirm('Delete item?');L('confirm result='+ok)};
+window.benchData={answer:42};
+L('loaded');
+</script>
+</body></html>

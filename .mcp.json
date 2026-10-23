@@ -1,0 +1,40 @@
+{
+  "mcpServers": {
+    "tdt": {
+      "command": "node",
+      "args": [
+        "tdt-mcp/dist/index.js"
+      ],
+      "env": {
+        "TDT_CDP_URL": "http://127.0.0.1:9222",
+        "TDT_ALLOWED_ORIGINS": "${TDT_ALLOWED_ORIGINS:-}",
+        "TDT_CHROME_ARGS": "${TDT_CHROME_ARGS:---window-size=1600,1000}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--cdp-endpoint",
+        "http://127.0.0.1:9222",
+        "--caps",
+        "testing,network,storage,devtools",
+        "--output-dir",
+        "tdt-output/playwright"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.12.0",
+        "--browserUrl",
+        "http://127.0.0.1:9222",
+        "--categoryInput=false",
+        "--categoryMemory=false",
+        "--no-usage-statistics"
+      ]
+    }
+  }
+}
