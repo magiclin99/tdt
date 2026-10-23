@@ -1,6 +1,6 @@
 # TDT — Talk Driven Testing
 
-用嘴 QA 
+用嘴 QA  
 下載後，在本專案目錄開啟 Claude Code，說要測什麼，AI 就會在 **專用 Chrome** 裡操作。
 
 ## 初次設定
