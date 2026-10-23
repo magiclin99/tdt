@@ -31,7 +31,7 @@ Claude Code ─┬─ tdt（自建：看、點、填、讀頁面、對話框、�
 | `scripts/qa-chrome.mjs` | 用指定的 Chrome profile 開 QA Chrome；不帶參數列出所有 profile |
 | `testbench/` | 驗證用的本機測試頁；`smoke.md` 是 tdt 自己的冒煙測試案例 |
 | `evals/` | agent 評測：10 個 QA 任務交給全新的 Claude Code session 執行，對照預埋 bug 的答案卷評分（見 `evals/README.md`） |
-| `mcp_tech_spec.md`、`mcp_tool_verification.md`、`mcp_comparison.md` | 前期研究：Claude in Chrome 的規格、實測結果，以及跟現成 MCP 的比對 |
+| `mcp_tech_spec.md`、`mcp_tool_verification.md` | 前期研究：Claude in Chrome 的規格和實測結果 |
 
 ## 開發與驗證
 
