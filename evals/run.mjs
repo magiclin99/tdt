@@ -35,8 +35,7 @@ function setupWorkspace(task, i) {
   mkdirSync(ws, { recursive: true });
   cpSync(path.join(here, 'target-app'), app, { recursive: true });
   cpSync(path.join(repo, '.claude'), path.join(ws, '.claude'), { recursive: true });
-  cpSync(path.join(repo, 'cases', 'known-issues.md'), path.join(ws, 'cases', 'known-issues.md'));
-  cpSync(path.join(here, 'fixtures'), path.join(ws, 'cases', 'fixtures'), { recursive: true });
+  cpSync(path.join(here, 'fixtures'), path.join(ws, 'fixtures'), { recursive: true });
 
   const repoMcp = JSON.parse(readFileSync(path.join(repo, '.mcp.json'), 'utf8'));
   const cdp = `http://127.0.0.1:${cdpPort}`;

@@ -78,7 +78,7 @@
   {
     "id": "T7",
     "title": "表單驗證與上傳",
-    "prompt": "/tdt 測 {url} 的 Profile 表單。規格：電話只能填數字；頭像只能上傳圖片。測試檔案在 cases/fixtures/（avatar.png、notes.txt）。",
+    "prompt": "/tdt 測 {url} 的 Profile 表單。規格：電話只能填數字；頭像只能上傳圖片。測試檔案在 fixtures/（avatar.png、notes.txt）。",
     "expect": {
       "calls": [
         "tdt__file_upload"

@@ -10,8 +10,6 @@
       "mcp__playwright",
       "mcp__chrome-devtools",
       "Bash(node scripts/qa-chrome.mjs:*)",
-      "Edit(./cases/**)",
-      "Write(./cases/**)",
       "Read(./tdt-output/**)"
     ],
     "deny": [

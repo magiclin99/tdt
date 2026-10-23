@@ -4,6 +4,8 @@ TDT（Talk Driven Testing）讓 QA 在 Claude Code 裡用講的做網頁測試�
 
 `README.md` 是給 QA 看的，只放安裝和使用方式，越精簡越好。架構、實作細節、開發流程寫在這裡。
 
+這個 repo 是**工具**。QA 的測試案例和已知問題是他們自己的文件，不放進 repo。skill 不規定 QA 怎麼放、怎麼寫這些文件，也不做假設；QA 需要什麼，會自己告訴 AI。
+
 ## 架構
 
 ```
@@ -27,8 +29,7 @@ Claude Code ─┬─ tdt（自建：看、點、填、讀頁面、對話框、�
 | `tdt-mcp/test/verify.mjs` | 自建 MCP 的 73 個端對端驗證案例 |
 | `tdt-mcp/test/verify-trio.mjs` | 三個 server 共用同一個 Chrome 的 18 個整合驗證案例 |
 | `scripts/qa-chrome.mjs` | 用指定的 Chrome profile 開 QA Chrome；不帶參數列出所有 profile |
-| `cases/` | 測試案例和已知問題（格式見 `.claude/skills/tdt/SKILL.md`） |
-| `testbench/` | 驗證用的本機測試頁 |
+| `testbench/` | 驗證用的本機測試頁；`smoke.md` 是 tdt 自己的冒煙測試案例 |
 | `evals/` | agent 評測：10 個 QA 任務交給全新的 Claude Code session 執行，對照預埋 bug 的答案卷評分（見 `evals/README.md`） |
 | `mcp_tech_spec.md`、`mcp_tool_verification.md`、`mcp_comparison.md` | 前期研究：Claude in Chrome 的規格、實測結果，以及跟現成 MCP 的比對 |
 
